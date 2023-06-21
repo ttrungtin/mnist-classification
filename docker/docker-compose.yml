@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  api:
+    image: nvcr.io/nvidia/tensorflow:21.11-tf2-py3
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    volumes:
+      - /home/tintr/Documents/personal/mnist-classification/:/home/mnist-classification
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
