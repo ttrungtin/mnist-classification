@@ -4,6 +4,7 @@ import tensorflow_datasets as tfds
 
 from src.config import ProjectConfig
 
+
 class RawDataProcessor:
     def __init__(self, project_conf: ProjectConfig) -> None:
         self.ds_train = None
@@ -25,7 +26,7 @@ class RawDataProcessor:
             self.normalize_img, num_parallel_calls=tf.data.AUTOTUNE)
         self.ds_train = self.ds_train.cache()
         self.ds_train = self.ds_train.shuffle(
-        self.ds_info.splits['train'].num_examples)
+            self.ds_info.splits['train'].num_examples)
         self.ds_train = self.ds_train.batch(self.project_conf.batch_size)
         self.ds_train = self.ds_train.prefetch(tf.data.AUTOTUNE)
 
@@ -46,11 +47,10 @@ class RawDataProcessor:
         # train gen
         self.ds_train = tf.data.Dataset.from_tensor_slices(
             (x_train, y_train)).shuffle(10000).batch(self.project_conf.batch_size)
-        
+
         # test gen
         self.ds_test = tf.data.Dataset.from_tensor_slices(
             (x_test, y_test)).batch(self.project_conf.batch_size)
-
 
     @staticmethod
     def normalize_img(image, label):
@@ -58,7 +58,6 @@ class RawDataProcessor:
 
     def print_data_info(self):
         print(self.ds_info)
-
 
 
 if __name__ == "__main__":

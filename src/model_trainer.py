@@ -1,4 +1,5 @@
 import argparse
+import datetime
 
 from model.model_base import BaseModel
 from src.raw_data_processing import RawDataProcessor
@@ -7,7 +8,8 @@ from src.config import ProjectConfig
 import tensorflow as tf
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.metrics import SparseCategoricalAccuracy
+from tensorflow.keras.metrics import SparseCategoricalAccuracy, Mean
+
 
 class ModelTrainer:
 
@@ -18,8 +20,8 @@ class ModelTrainer:
     def load_data(self):
         self.ds_processor = RawDataProcessor(self.project_conf)
         self.ds_processor.load_data_tfmn()
-        
-    def train_model(self):  
+
+    def train_model(self):
         # load data
         self.load_data()
 
@@ -29,12 +31,18 @@ class ModelTrainer:
         # config
         loss = SparseCategoricalCrossentropy(from_logits=True)
         optimizer = Adam()
-        
-        train_loss = tf.keras.metrics.Mean(name='train_loss')
-        train_acc = tf.keras.metrics.SparseCategoricalAccuracy(name='train_acc')
 
-        test_loss = tf.keras.metrics.Mean(name='test_loss')
-        test_acc = tf.keras.metrics.SparseCategoricalAccuracy(name='test_acc')
+        train_loss = Mean(name='train_loss')
+        train_acc = SparseCategoricalAccuracy(name='train_acc')
+
+        test_loss = Mean(name='test_loss')
+        test_acc = SparseCategoricalAccuracy(name='test_acc')
+
+        # tensorboard
+        train_summary_writer = tf.summary.create_file_writer(
+            self.project_conf.tfboard_train_log_dir)
+        test_summary_writer = tf.summary.create_file_writer(
+            self.project_conf.tfboard_test_log_dir)
 
         # step
         EPOCHS = self.project_conf.epochs
@@ -50,8 +58,10 @@ class ModelTrainer:
                     predictions = model(images, training=True)
                     losses = loss(labels, predictions)
                 gradients = tape.gradient(losses, model.trainable_variables)
-                optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                optimizer.apply_gradients(
+                    zip(gradients, model.trainable_variables))
 
+                # for print
                 train_loss(losses)
                 train_acc(labels, predictions)
 
@@ -60,19 +70,28 @@ class ModelTrainer:
                 predictions = model(test_images, training=False)
                 losses = loss(test_labels, predictions)
 
+                # for print
                 test_loss(losses)
                 test_acc(test_labels, predictions)
-        
-            print("Epoch: {} Loss: {} Acc: {} Test Loss: {} Test Acc: {}\n".format(
+
+            # tensorboard
+            with train_summary_writer.as_default():
+                tf.summary.scalar('loss', train_loss.result(), step=epochs)
+                tf.summary.scalar('acc', train_acc.result(), step=epochs)
+            with test_summary_writer.as_default():
+                tf.summary.scalar("test loss", test_loss.result(), step=epochs)
+                tf.summary.scalar("test acc", test_acc.result(), step=epochs)
+
+            print("Epoch: {} Loss: {} Acc: {} Test Loss: {} Test Acc: {}".format(
                 epochs+1,
                 train_loss.result(),
                 train_acc.result() * 100,
                 test_loss.result(),
                 test_acc.result() * 100
-                )
+            )
             )
 
-        
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--batch-size", type=int,
@@ -90,4 +109,3 @@ if __name__ == "__main__":
 
     model_trainer = ModelTrainer(project_conf)
     model_trainer.train_model()
-

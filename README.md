@@ -1,3 +1,8 @@
 to-do
 - [x] base structure
-- [] tensorboard implementation
+- [x] tensorboard implementation
+- [ ] mlflow implementation
+- [ ] model.fit version
+- [ ] dynamic model selection
+- [ ] yml config file
+- [ ] dynamic model layer config
