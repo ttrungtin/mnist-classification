@@ -9,6 +9,7 @@ import tensorflow as tf
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import SparseCategoricalAccuracy, Mean
+from tensorflow.keras.callbacks import TensorBoard
 
 
 class ModelTrainer:
@@ -20,6 +21,31 @@ class ModelTrainer:
     def load_data(self):
         self.ds_processor = RawDataProcessor(self.project_conf)
         self.ds_processor.load_data_tfmn()
+
+    def train_model_fit(self):
+        # load data
+        self.load_data()
+
+        # load model
+        model = BaseModel(self.project_conf)
+
+        model.compile(
+            optimizer=Adam(),
+            loss=SparseCategoricalCrossentropy(from_logits=True),
+            metrics=[SparseCategoricalAccuracy()]
+        )
+
+        # callback
+        tfboard = TensorBoard(
+            log_dir=self.project_conf.tfboard_log_dir, histogram_freq=1)
+
+        # fit
+        model.fit(
+            self.ds_processor.ds_train,
+            epochs=self.project_conf.epochs,
+            validation_data=self.ds_processor.ds_test,
+            callbacks=[tfboard]
+        )
 
     def train_model(self):
         # load data
@@ -108,4 +134,5 @@ if __name__ == "__main__":
     project_conf.num_classes = args.num_classes
 
     model_trainer = ModelTrainer(project_conf)
-    model_trainer.train_model()
+    # model_trainer.train_model()
+    model_trainer.train_model_fit()

@@ -3,3 +3,6 @@ project_up:
 
 run:
 	python -m src.model_trainer
+
+run_tensorboard:
+	tensorboard --logdir log/
