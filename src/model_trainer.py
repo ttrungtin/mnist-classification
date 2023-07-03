@@ -1,7 +1,7 @@
 import argparse
 import datetime
 
-from model.model_base import BaseModel
+from model.model_config import BaseModel
 from src.raw_data_processing import RawDataProcessor
 from src.config import ProjectConfig
 

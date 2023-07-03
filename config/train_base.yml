@@ -1,0 +1,8 @@
+MODEL:
+  NAME: "cnn"
+MODE: 
+  FIT: True
+TRAIN:
+  BATCH_SIZE: 64
+  NUM_CLASSES: 10
+  EPOCHS: 100
